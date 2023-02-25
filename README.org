@@ -1,0 +1,154 @@
+#+TITLE: emulate_turing_machine documentation
+#+Author: Acharya U
+
+* How to use
+you use the *TUPROG* environment variable  to send the filename of the file that contains the instructions to the program
+#+BEGIN_SRC bash
+TUPROG="<your program file name>" ./emulate_turing_machine
+#+END_SRC
+
+* How to compile
+use cargo
+#+BEGIN_SRC bash
+cargo build --release
+#+END_SRC
+
+* Machine
+It is just a turing machine with some additional features to make it easier for learning people to learn how computers work
+
+there is a memory array of u8. It is 10kb in size. The tape is at index 0 in the begining. Negative indexes don't exist and if we try to access them, the program will throw an error
+
+There exists a cache of 1 byte, This can be accessed any time.
+
+* Instructions
+this enum has all the instructions.
+
+#+BEGIN_SRC rust
+enum Instruction {
+    Read,      // put the read value to cache
+    Write,     // add the value in chache to the current block
+    Reduce,    // subtract the cacle value from the current clock
+    Add,       // add 1 to the cell
+    Subtract,  // Subtract 1 from the cell
+    MoveFront, // move fromt
+    MoveBack,  // move back
+    Display,   // print the u8 as char in stdout
+    Number,    // Print the Number itself
+    If, // run the instruction right after If if the read value is 0, else run the second instruction
+    MarkOpen, // mark the place by number
+    MarkClose, // goto back to respective mark if it reads 1
+}
+#+END_SRC
+
+The keywords you must use to access the instructions are defined in this snippet of code
+
+#+BEGIN_SRC rust
+          match s {
+              'r' => ok(instruction::read),
+              'w' => ok(instruction::write),
+              't' => ok(instruction::reduce),
+              '+' => ok(instruction::add),
+              '-' => ok(instruction::subtract),
+              '>' => ok(instruction::movefront),
+              '<' => ok(instruction::moveback),
+              'd' => ok(instruction::display),
+              '?' => ok(instruction::if),
+              'n' => ok(instruction::number),
+              '[' => ok(instruction::markopen),
+              ']' => ok(instruction::markclose),
+              _ => err(readerror::comment),
+          }
+#+END_SRC
+
+anything else in the keyword is taken as comment. You may format your code any way you want.
+* Programs
+*here are some programs for testing this intrepreter*
+** Hello World program
+this program will print hello world.
+here, I am just using + instruction to set each memory block to be the ASCII numbers representing "Hello World" and pringing them using the D. The > instruction is used to go to the next block of memory.
+
+#+BEGIN_SRC 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++++++++++++++++++++++++
+>
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>
+++++++++++
+>
+<<<<<<<<<<<<
+D>D>D>D>D>D>D>D>D>D>D>D>D
+#+END_SRC
+** Factorial of 5
+As the memory blocks are all unsigned 8bits, all they can store upto 253, so 5! is the max it can store as 6! is 720, which will overflow
+
+Now behold the program
+#+BEGIN_SRC 
+>+++++R[>W-R]<<[<R>-[ < W > -  ]<N>++++++++++D<]
+#+END_SRC
+
+this org table will show you how it works:
+| >             | go one step front                               |
+| +++++         | set the block to 5                              |
+| R             | store 5 in cache                                |
+| [             | Mark set, call it 1                             |
+| >             | go one step front                               |
+| W             | Add the value in cache value to current block   |
+| -             | subtract 1                                      |
+| R             | Read the value                                  |
+| ]             | check if it is pointing to 0, else go to mark 1 |
+| <<            | go back 2 steps                                 |
+| [             | Mark set, call it 2                             |
+| <             | go back 1 step                                  |
+| R             | Cache the data                                  |
+| >-            | Go one step fromt and subtract 1                |
+| [             | set mark, call it 3                             |
+| <             | go back one step                                |
+| W             | Add the value in cache value to current block   |
+| >-            | Go front one step  and subtract 1               |
+| ]             | check if it is pointing to 0, else go to mark 1 |
+| <N            | Go back one step and print the number           |
+| >++++++++++D< | this prints \n if the following block is 0      |
+| ]             | Check if it is opininng to 0, else goto mark 2  |
+
+*A trick to multiply*
+#+BEGIN_SRC 
+<R>-[ < W > -  ]<N
+#+END_SRC
+this code can be used to multiply two numbers and print the result, as long as the two numbers are kept like in this table
+|5|6|
+and the head must be pointing at 6,
+the opuput would be 30
+
+so if you wanted to multiply 5 and 6 you would write like this
+#+BEGIN_SRC
++++++      | set it to 5
+>          | go to next block
+++++++     | set it to 6
+the numbers are in memory as we set them to be
+so we can use the multiplication snippet that we used before:
+<R>-[ < W > -  ]<N
+#+END_SRC
+
+this  code is legal as everything that is not a instruction is treated as a comment, even whitespaces
+
+* Future TODO
+- Make bit operation instruction
