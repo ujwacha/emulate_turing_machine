@@ -44,19 +44,19 @@ The keywords you must use to access the instructions are defined in this snippet
 
 #+BEGIN_SRC rust
           match s {
-              'r' => ok(instruction::read),
-              'w' => ok(instruction::write),
-              't' => ok(instruction::reduce),
-              '+' => ok(instruction::add),
-              '-' => ok(instruction::subtract),
-              '>' => ok(instruction::movefront),
-              '<' => ok(instruction::moveback),
-              'd' => ok(instruction::display),
-              '?' => ok(instruction::if),
-              'n' => ok(instruction::number),
-              '[' => ok(instruction::markopen),
-              ']' => ok(instruction::markclose),
-              _ => err(readerror::comment),
+              'R' => Ok(Instruction::Read),
+              'W' => Ok(Instruction::Write),
+              'T' => Ok(Instruction::Reduce),
+              '+' => Ok(Instruction::Add),
+              '-' => Ok(Instruction::Subtract),
+              '>' => Ok(Instruction::MoveFront),
+              '<' => Ok(Instruction::MoveBack),
+              'D' => Ok(Instruction::Display),
+              '?' => Ok(Instruction::If),
+              'N' => Ok(Instruction::Number),
+              '[' => Ok(Instruction::MarkOpen),
+              ']' => Ok(Instruction::MarkClose),
+              _ => Err(ReadError::Comment),
           }
 #+END_SRC
 
